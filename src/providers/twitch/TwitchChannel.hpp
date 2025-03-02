@@ -27,6 +27,7 @@
 #include <unordered_map>
 
 class TestIrcMessageHandlerP;
+class TestEventSubMessagesP;
 
 namespace chatterino {
 
@@ -513,12 +514,19 @@ private:
     std::vector<boost::signals2::scoped_connection> bSignals_;
 
     eventsub::SubscriptionHandle eventSubChannelModerateHandle;
+    eventsub::SubscriptionHandle eventSubAutomodMessageHoldHandle;
+    eventsub::SubscriptionHandle eventSubAutomodMessageUpdateHandle;
+    eventsub::SubscriptionHandle eventSubSuspiciousUserMessageHandle;
+    eventsub::SubscriptionHandle eventSubSuspiciousUserUpdateHandle;
+    eventsub::SubscriptionHandle eventSubChannelChatUserMessageHoldHandle;
+    eventsub::SubscriptionHandle eventSubChannelChatUserMessageUpdateHandle;
 
     friend class TwitchIrcServer;
     friend class MessageBuilder;
     friend class IrcMessageHandler;
     friend class Commands_E2E_Test;
     friend class ::TestIrcMessageHandlerP;
+    friend class ::TestEventSubMessagesP;
 };
 
 }  // namespace chatterino

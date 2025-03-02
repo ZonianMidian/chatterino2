@@ -6,15 +6,24 @@ generate_json_impls(
     HEADERS
         include/twitch-eventsub-ws/messages/metadata.hpp
 
+        include/twitch-eventsub-ws/payloads/automod-message-hold-v2.hpp
+        include/twitch-eventsub-ws/payloads/automod-message-update-v2.hpp
+        include/twitch-eventsub-ws/payloads/automod-message.hpp
         include/twitch-eventsub-ws/payloads/channel-ban-v1.hpp
         include/twitch-eventsub-ws/payloads/channel-chat-message-v1.hpp
         include/twitch-eventsub-ws/payloads/channel-chat-notification-v1.hpp
+        include/twitch-eventsub-ws/payloads/channel-chat-user-message-hold-v1.hpp
+        include/twitch-eventsub-ws/payloads/channel-chat-user-message-update-v1.hpp
         include/twitch-eventsub-ws/payloads/channel-moderate-v2.hpp
+        include/twitch-eventsub-ws/payloads/channel-suspicious-user-message-v1.hpp
+        include/twitch-eventsub-ws/payloads/channel-suspicious-user-update-v1.hpp
         include/twitch-eventsub-ws/payloads/channel-update-v1.hpp
         include/twitch-eventsub-ws/payloads/session-welcome.hpp
         include/twitch-eventsub-ws/payloads/stream-offline-v1.hpp
         include/twitch-eventsub-ws/payloads/stream-online-v1.hpp
+        include/twitch-eventsub-ws/payloads/structured-message.hpp
         include/twitch-eventsub-ws/payloads/subscription.hpp
+        include/twitch-eventsub-ws/payloads/suspicious-users.hpp
 )
 
 set(SOURCE_FILES
@@ -28,6 +37,7 @@ set(SOURCE_FILES
 
     # Subscription types (only additional functions)
     payloads/channel-ban-v1.cpp
+    payloads/channel-moderate-v2.cpp
     # Add your new subscription type source file above this line
 
     ${eventsub_generated_sources}
@@ -70,6 +80,11 @@ if (MSVC)
 
     # Use the function inlining level from 'Release' mode (2).
     string(REPLACE "/Ob1" "/Ob2" CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
+
+    # Add nativs to PDB
+    set(_natvis_path "${CMAKE_CURRENT_LIST_DIR}/../docs/twitch-eventsub-ws.natvis")
+    cmake_path(ABSOLUTE_PATH _natvis_path NORMALIZE)
+    target_link_options(${PROJECT_NAME} INTERFACE "/NATVIS:${_natvis_path}")
 
     # Configure warnings
 
