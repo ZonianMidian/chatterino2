@@ -758,6 +758,7 @@ MessageBuilder::MessageBuilder(TimeoutMessageTag, const QString &username,
 
     this->message().flags.set(MessageFlag::System);
     this->message().flags.set(MessageFlag::Timeout);
+    this->message().flags.set(MessageFlag::ModerationAction);
     this->message().flags.set(MessageFlag::DoNotTriggerNotification);
     this->message().timeoutUser = username;
 
@@ -776,6 +777,7 @@ MessageBuilder::MessageBuilder(const BanAction &action, const QDateTime &time,
     this->emplace<TimestampElement>();
     this->message().flags.set(MessageFlag::System);
     this->message().flags.set(MessageFlag::Timeout);
+    this->message().flags.set(MessageFlag::ModerationAction);
     this->message().timeoutUser = action.target.login;
     this->message().loginName = action.source.login;
     this->message().count = count;
@@ -1493,7 +1495,7 @@ MessagePtr MessageBuilder::makeDeletionMessageFromIRC(
     builder.emplace<TimestampElement>();
     builder.message().flags.set(MessageFlag::System);
     builder.message().flags.set(MessageFlag::DoNotTriggerNotification);
-    builder.message().flags.set(MessageFlag::Timeout);
+    builder.message().flags.set(MessageFlag::ModerationAction);
     // TODO(mm2pl): If or when jumping to a single message gets implemented a link,
     // add a link to the originalMessage
     builder.emplace<TextElement>("A message from", MessageElementFlag::Text,
@@ -1532,7 +1534,7 @@ MessagePtr MessageBuilder::makeDeletionMessageFromPubSub(
     builder.emplace<TimestampElement>();
     builder.message().flags.set(MessageFlag::System);
     builder.message().flags.set(MessageFlag::DoNotTriggerNotification);
-    builder.message().flags.set(MessageFlag::Timeout);
+    builder.message().flags.set(MessageFlag::ModerationAction);
 
     builder
         .emplace<TextElement>(action.source.login, MessageElementFlag::Username,
@@ -1739,7 +1741,7 @@ std::pair<MessagePtr, MessagePtr> MessageBuilder::makeAutomodMessage(
     builder.message().loginName = "automod";
     builder.message().channelName = channelName;
     builder.message().flags.set(MessageFlag::PubSub);
-    builder.message().flags.set(MessageFlag::Timeout);
+    builder.message().flags.set(MessageFlag::ModerationAction);
     builder.message().flags.set(MessageFlag::AutoMod);
     builder.message().flags.set(MessageFlag::AutoModOffendingMessageHeader);
 
@@ -1790,7 +1792,7 @@ std::pair<MessagePtr, MessagePtr> MessageBuilder::makeAutomodMessage(
     builder2.emplace<TwitchModerationElement>();
     builder2.message().loginName = action.target.login;
     builder2.message().flags.set(MessageFlag::PubSub);
-    builder2.message().flags.set(MessageFlag::Timeout);
+    builder2.message().flags.set(MessageFlag::ModerationAction);
     builder2.message().flags.set(MessageFlag::AutoMod);
     builder2.message().flags.set(MessageFlag::AutoModOffendingMessage);
 
@@ -2092,9 +2094,9 @@ MessagePtrMut MessageBuilder::makeClearChatMessage(const QDateTime &now,
     builder.emplace<TimestampElement>(now.time());
     builder->count = count;
     builder->serverReceivedTime = now;
-    builder.message().flags.set(MessageFlag::System,
-                                MessageFlag::DoNotTriggerNotification,
-                                MessageFlag::ClearChat);
+    builder.message().flags.set(
+        MessageFlag::System, MessageFlag::DoNotTriggerNotification,
+        MessageFlag::ClearChat, MessageFlag::ModerationAction);
 
     QString messageText;
     if (actor.isEmpty())
