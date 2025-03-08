@@ -169,6 +169,10 @@ public:
         "/appearance/currentFontSize",
         DEFAULT_FONT_SIZE,
     };
+    IntSetting chatFontWeight = {
+        "/appearance/currentFontWeight",
+        QFont::Normal,
+    };
     BoolSetting hideReplyContext = {"/appearance/hideReplyContext", false};
     BoolSetting showReplyButton = {"/appearance/showReplyButton", false};
     BoolSetting stripReplyMention = {"/appearance/stripReplyMention", true};
@@ -361,6 +365,12 @@ public:
     BoolSetting lowercaseDomains = {"/links/linkLowercase", true};
 
     /// Streamer Mode
+    // TODO: Should these settings be converted to booleans that live outside of
+    // streamer mode?
+    // Something like:
+    //  - "Hide when streamer mode is enabled"
+    //  - "Always hide"
+    //  - "Don't hide"
     EnumSetting<StreamerModeSetting> enableStreamerMode = {
         "/streamerMode/enabled", StreamerModeSetting::DetectStreamingSoftware};
     BoolSetting streamerModeHideUsercardAvatars = {
@@ -371,6 +381,10 @@ public:
         "/streamerMode/hideViewerCountAndDuration", false};
     BoolSetting streamerModeHideModActions = {"/streamerMode/hideModActions",
                                               true};
+    BoolSetting streamerModeHideSuspiciousUsers = {
+        "/streamerMode/hideSuspiciousUsers",
+        true,
+    };
     BoolSetting streamerModeMuteMentions = {"/streamerMode/muteMentions", true};
     BoolSetting streamerModeSuppressLiveNotifications = {
         "/streamerMode/supressLiveNotifications", false};
@@ -687,7 +701,7 @@ public:
     };
     BoolSetting enableExperimentalEventSub = {
         "/eventsub/enableExperimental",
-        false,
+        true,
     };
 
     QStringSetting additionalExtensionIDs{"/misc/additionalExtensionIDs", ""};
