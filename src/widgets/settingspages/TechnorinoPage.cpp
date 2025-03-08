@@ -76,7 +76,7 @@ TechnorinoPage::TechnorinoPage()
 {
     auto *y = new QVBoxLayout;
     auto *x = new QHBoxLayout;
-    auto *view = new GeneralPageView;
+    auto *view = GeneralPageView::withNavigation(this);
     this->view_ = view;
     x->addWidget(view);
     auto *z = new QFrame;
@@ -106,32 +106,59 @@ void TechnorinoPage::initLayout(GeneralPageView &layout)
     auto &s = *getSettings();
 
     layout.addTitle("Chat");
-    layout.addCheckbox("Show placeholder in text input box (requires restart)",
-                       s.showTextInputPlaceholder);
-    layout.addCheckbox("Gray-out recent messages", s.grayOutRecents, false,
-                       "Gray-out recent messages");
-    layout.addCheckbox("Convert #text to channel links", s.channelLinks, false,
-                       "Gray-out recent messages");
+    // SettingWidget::checkbox("", s.hideModerated)->setTooltip("")->addTo(layout);
+    SettingWidget::checkbox(
+        "Show placeholder in text input box (requires restart)",
+        s.showTextInputPlaceholder)
+        ->setTooltip("Show placeholder in text input box (requires restart)")
+        ->addTo(layout);
+    SettingWidget::checkbox("Gray-out recent messages", s.grayOutRecents)
+        ->setTooltip("Gray-out recent messages")
+        ->addTo(layout);
+    SettingWidget::checkbox("Convert #text to channel links", s.channelLinks)
+        ->setTooltip("Convert #text to channel links")
+        ->addTo(layout);
 
     layout.addTitle("Miscellaneous");
-    layout.addCheckbox("Fake messages as webchat", s.fakeWebChat);
-    layout.addCheckbox("Use bot limits for messages", s.useBotLimitsMessage);
-    layout.addCheckbox("Use bot limits for JOINs", s.useBotLimitsJoin);
-    layout.addCheckbox(
+    SettingWidget::checkbox("Fake messages as webchat", s.fakeWebChat)
+        ->setTooltip("Fake messages as webchat")
+        ->addTo(layout);
+    SettingWidget::checkbox("Use bot limits for messages",
+                            s.useBotLimitsMessage)
+        ->setTooltip("Use bot limits for messages")
+        ->addTo(layout);
+    SettingWidget::checkbox("Use bot limits for JOINs", s.useBotLimitsJoin)
+        ->setTooltip("Use bot limits for JOINs")
+        ->addTo(layout);
+    SettingWidget::checkbox(
         "Enable. Required for abnormal nonce and webchat detection to work!",
-        s.nonceFuckeryEnabled);
-    layout.addCheckbox("Abnormal nonce detection", s.abnormalNonceDetection);
-    layout.addCheckbox("Webchat detection. Highlights messages sent from "
-                       "webchat in color specified below.",
-                       s.normalNonceDetection);
-    layout.addColorButton("Webchat detected color",
-                          QColor(getSettings()->webchatColor.getValue()),
-                          getSettings()->webchatColor);
-    layout.addCheckbox("Watching tab live sound", s.watchingTabLiveSound);
-    layout.addCheckbox("Auto detach watching tab (~10s timeout)",
-                       s.autoDetachLiveTab);
-    layout.addCheckbox("Markdown parsing (Experimental)", s.markdownParsing);
-
+        s.nonceFuckeryEnabled)
+        ->setTooltip("Enable. Required for abnormal nonce and webchat "
+                     "detection to work!")
+        ->addTo(layout);
+    SettingWidget::checkbox("Abnormal nonce detection",
+                            s.abnormalNonceDetection)
+        ->setTooltip("Abnormal nonce detection")
+        ->addTo(layout);
+    SettingWidget::checkbox("Webchat detection. Highlights messages sent from "
+                            "webchat in color specified below.",
+                            s.normalNonceDetection)
+        ->setTooltip("Webchat detection. Highlights messages sent from webchat "
+                     "in color specified below.")
+        ->addTo(layout);
+    SettingWidget::colorButton("Webchat detected color", s.webchatColor)
+        ->addTo(layout);
+    SettingWidget::checkbox("Watching tab live sound", s.watchingTabLiveSound)
+        ->setTooltip("Watching tab live sound")
+        ->addTo(layout);
+    SettingWidget::checkbox("Auto detach watching tab (~10s timeout)",
+                            s.autoDetachLiveTab)
+        ->setTooltip("Auto detach watching tab (~10s timeout)")
+        ->addTo(layout);
+    SettingWidget::checkbox("Markdown parsing (Experimental)",
+                            s.markdownParsing)
+        ->setTooltip("Markdown parsing (Experimental)")
+        ->addTo(layout);
     layout.addStretch();
 
     // invisible element for width

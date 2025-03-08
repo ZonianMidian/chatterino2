@@ -76,6 +76,15 @@ enum class ShowModerationState : int {
     Never = 1,
 };
 
+enum class StreamLinkPreferredQuality : std::uint8_t {
+    Choose,
+    Source,
+    High,
+    Medium,
+    Low,
+    AudioOnly,
+};
+
 enum StreamerModeSetting {
     Disabled = 0,
     Enabled = 1,
@@ -557,8 +566,10 @@ public:
     BoolSetting streamlinkUseCustomPath = {"/external/streamlink/useCustomPath",
                                            false};
     QStringSetting streamlinkPath = {"/external/streamlink/customPath", ""};
-    QStringSetting preferredQuality = {"/external/streamlink/quality",
-                                       "Choose"};
+    EnumStringSetting<StreamLinkPreferredQuality> preferredQuality = {
+        "/external/streamlink/quality",
+        StreamLinkPreferredQuality::Choose,
+    };
     QStringSetting streamlinkOpts = {"/external/streamlink/options", ""};
 
     // Custom URI Scheme
@@ -679,6 +690,8 @@ public:
         false,
     };
 
+    QStringSetting additionalExtensionIDs{"/misc/additionalExtensionIDs", ""};
+
 private:
     ChatterinoSetting<std::vector<HighlightPhrase>> highlightedMessagesSetting =
         {"/highlighting/highlights"};
@@ -699,6 +712,7 @@ private:
         {"/moderation/actions"};
     ChatterinoSetting<std::vector<ChannelLog>> loggedChannelsSetting = {
         "/logging/channels"};
+    SignalVector<QString> mutedChannels;
 
 public:
     SignalVector<HighlightPhrase> highlightedMessages;
@@ -706,7 +720,6 @@ public:
     SignalVector<HighlightBadge> highlightedBadges;
     SignalVector<HighlightBlacklistUser> blacklistedUsers;
     SignalVector<IgnorePhrase> ignoredMessages;
-    SignalVector<QString> mutedChannels;
     SignalVector<FilterRecordPtr> filterRecords;
     SignalVector<Nickname> nicknames;
     SignalVector<ModerationAction> moderationActions;
@@ -717,11 +730,10 @@ public:
     bool isMutedChannel(const QString &channelName);
     bool toggleMutedChannel(const QString &channelName);
     std::optional<QString> matchNickname(const QString &username);
-
-private:
     void mute(const QString &channelName);
     void unmute(const QString &channelName);
 
+private:
     void updateModerationActions();
 
     std::unique_ptr<rapidjson::Document> snapshot_;
@@ -732,3 +744,26 @@ private:
 Settings *getSettings();
 
 }  // namespace chatterino
+
+template <>
+constexpr magic_enum::customize::customize_t
+    magic_enum::customize::enum_name<chatterino::StreamLinkPreferredQuality>(
+        chatterino::StreamLinkPreferredQuality value) noexcept
+{
+    using chatterino::StreamLinkPreferredQuality;
+    switch (value)
+    {
+        case chatterino::StreamLinkPreferredQuality::Choose:
+        case chatterino::StreamLinkPreferredQuality::Source:
+        case chatterino::StreamLinkPreferredQuality::High:
+        case chatterino::StreamLinkPreferredQuality::Medium:
+        case chatterino::StreamLinkPreferredQuality::Low:
+            return default_tag;
+
+        case chatterino::StreamLinkPreferredQuality::AudioOnly:
+            return "Audio only";
+
+        default:
+            return default_tag;
+    }
+}
