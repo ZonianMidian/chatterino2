@@ -558,6 +558,8 @@ set(SOURCE_FILES
         util/RenameThread.hpp
         util/SampleData.cpp
         util/SampleData.hpp
+        util/SelfCheck.cpp
+        util/SelfCheck.hpp
         util/SharedPtrElementLess.hpp
         util/SignalListener.hpp
         util/StreamLink.cpp
@@ -566,6 +568,8 @@ set(SOURCE_FILES
         util/Twitch.cpp
         util/Twitch.hpp
         util/TypeName.hpp
+        util/UnixSignalHandler.cpp
+        util/UnixSignalHandler.hpp
         util/Variant.hpp
         util/VectorMessageSink.cpp
         util/VectorMessageSink.hpp
@@ -784,6 +788,8 @@ if (APPLE)
     set(MACOS_BUNDLE_ICON_FILE "${CMAKE_SOURCE_DIR}/resources/chatterino.icns")
     list(APPEND SOURCE_FILES "${MACOS_BUNDLE_ICON_FILE}")
     set_source_files_properties(${MACOS_BUNDLE_ICON_FILE} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+
+    list(APPEND SOURCE_FILES util/MacOsHelpers.mm)
 endif ()
 
 # Generate source groups for use in IDEs
