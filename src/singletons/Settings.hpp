@@ -3,6 +3,7 @@
 #include "common/Channel.hpp"
 #include "common/ChatterinoSetting.hpp"
 #include "common/enums/MessageOverflow.hpp"
+#include "common/Modes.hpp"
 #include "common/SignalVector.hpp"
 #include "controllers/filters/FilterRecord.hpp"
 #include "controllers/highlights/HighlightBadge.hpp"
@@ -89,6 +90,11 @@ enum StreamerModeSetting {
     Disabled = 0,
     Enabled = 1,
     DetectStreamingSoftware = 2,
+};
+
+enum class TabStyle : std::uint8_t {
+    Normal,
+    Compact,
 };
 
 /// Settings which are availlable for reading and writing on the gui thread.
@@ -185,6 +191,10 @@ public:
     FloatSetting boldScale = {"/appearance/boldScale", 63};
     BoolSetting showTabCloseButton = {"/appearance/showTabCloseButton", true};
     BoolSetting showTabLive = {"/appearance/showTabLiveButton", true};
+    EnumStringSetting<TabStyle> tabStyle = {
+        "/appearance/tabStyle",
+        TabStyle::Normal,
+    };
     BoolSetting hidePreferencesButton = {"/appearance/hidePreferencesButton",
                                          false};
     BoolSetting hideUserButton = {"/appearance/hideUserButton", false};
@@ -381,8 +391,8 @@ public:
         "/streamerMode/hideViewerCountAndDuration", false};
     BoolSetting streamerModeHideModActions = {"/streamerMode/hideModActions",
                                               true};
-    BoolSetting streamerModeHideSuspiciousUsers = {
-        "/streamerMode/hideSuspiciousUsers",
+    BoolSetting streamerModeHideRestrictedUsers = {
+        "/streamerMode/hideRestrictedUsers",
         true,
     };
     BoolSetting streamerModeMuteMentions = {"/streamerMode/muteMentions", true};
@@ -572,6 +582,12 @@ public:
         "/notifications/suppressInitialLive", false};
 
     BoolSetting notificationToast = {"/notifications/enableToast", false};
+    BoolSetting createShortcutForToasts = {
+        "/notifications/createShortcutForToasts",
+        (Modes::instance().isPortable || Modes::instance().isExternallyPackaged)
+            ? false
+            : true,
+    };
     IntSetting openFromToast = {"/notifications/openFromToast",
                                 static_cast<int>(ToastReaction::OpenInBrowser)};
 

@@ -75,6 +75,7 @@ float fontSize(FontStyle style)
         case FontStyle::ChatMediumItalic:
         case FontStyle::ChatMediumMono:
         case FontStyle::ChatMediumStrikethrough:
+        case FontStyle::TimestampMedium:
             return chatSize();
         case FontStyle::ChatLarge:
             return 1.2F * chatSize();
@@ -106,6 +107,7 @@ int fontWeight(FontStyle style)
         case FontStyle::ChatMediumItalic:
         case FontStyle::ChatLarge:
         case FontStyle::ChatVeryLarge:
+        case FontStyle::TimestampMedium:
             return getSettings()->chatFontWeight.getValue();
 
         case FontStyle::ChatMediumBold:
@@ -138,6 +140,7 @@ bool isItalic(FontStyle style)
         case FontStyle::ChatMediumBold:
         case FontStyle::ChatLarge:
         case FontStyle::ChatVeryLarge:
+        case FontStyle::TimestampMedium:
         case FontStyle::UiMedium:
         case FontStyle::UiMediumBold:
         case FontStyle::UiTabs:
@@ -167,6 +170,7 @@ QString fontFamily(FontStyle style)
         case FontStyle::ChatMediumItalic:
         case FontStyle::ChatLarge:
         case FontStyle::ChatVeryLarge:
+        case FontStyle::TimestampMedium:
             return getSettings()->chatFontFamily.getValue();
         case FontStyle::ChatMediumMono:
             QFontDatabase::applicationFontFamilies(getApp()->monoFontId).at(0);
@@ -240,9 +244,28 @@ Fonts::FontData &Fonts::getOrCreateFontData(FontStyle type, float scale)
 
 Fonts::FontData Fonts::createFontData(FontStyle type, float scale)
 {
-    QFont font(fontFamily(type), static_cast<int>(fontSize(type) * scale),
-               fontWeight(type), isItalic(type));
+    QFont font{
+        fontFamily(type),
+        static_cast<int>(fontSize(type) * scale),
+        fontWeight(type),
+        isItalic(type),
+    };
+
     font.setStrikeOut(type == FontStyle::ChatMediumStrikethrough);
+
+    switch (type)
+    {
+        case FontStyle::TimestampMedium: {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
+            // Apply the OpenType feature `tnum` to timestamp fonts
+            // https://sparanoid.com/lab/opentype-features/#tnum
+            auto tag = QFont::Tag("tnum");
+            font.setFeature(tag, 1);
+#endif
+        }
+        break;
+    }
+
     return font;
 }
 
