@@ -31,6 +31,7 @@ option(CHATTERINO_GENERATE_COVERAGE "Generate coverage files" OFF)
 option(BUILD_TRANSLATIONS "" OFF)
 option(BUILD_SHARED_LIBS "" OFF)
 option(CHATTERINO_LTO "Enable LTO for all targets" OFF)
+option(CHATTERINO_PLUGINS "Enable ALPHA plugin support in Chatterino" ON)
 option(CHATTERINO_NO_AVIF_PLUGIN "Disable AVIF plugin" OFF)
 option(CHATTERINO_USE_GDI_FONTENGINE "Use the legacy GDI fontengine instead of the new DirectWrite one on Windows (Qt 6.8.0 and later)" ON)
 
