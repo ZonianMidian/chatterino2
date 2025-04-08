@@ -112,9 +112,6 @@ void TechnorinoPage::initLayout(GeneralPageView &layout)
         s.showTextInputPlaceholder)
         ->setTooltip("Show placeholder in text input box (requires restart)")
         ->addTo(layout);
-    SettingWidget::checkbox("Gray-out recent messages", s.grayOutRecents)
-        ->setTooltip("Gray-out recent messages")
-        ->addTo(layout);
     SettingWidget::checkbox("Convert #text to channel links", s.channelLinks)
         ->setTooltip("Convert #text to channel links")
         ->addTo(layout);
