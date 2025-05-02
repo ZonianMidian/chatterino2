@@ -88,7 +88,7 @@ void Channel::addMessage(MessagePtr message, MessageContext context,
 {
     MessagePtr deleted;
 
-    if (context == MessageContext::Original)
+    if (context == MessageContext::Original && this->getType() != Type::None)
     {
         // Only log original messages
         auto isDoNotLogSet =
