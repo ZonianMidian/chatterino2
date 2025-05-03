@@ -5,30 +5,21 @@
 #include "messages/ast/Parser.hpp"
 #include "messages/MessageColor.hpp"
 #include "messages/MessageFlag.hpp"
-#include "providers/twitch/pubsubmessages/LowTrustUsers.hpp"
 #include "singletons/Fonts.hpp"
 
 #include <IrcMessage>
 #include <QRegularExpression>
 #include <QString>
 #include <QTime>
+#include <QUrl>
 #include <QVariant>
 
 #include <ctime>
 #include <memory>
-#include <unordered_map>
 #include <utility>
 
 namespace chatterino {
 
-struct BanAction;
-struct UnbanAction;
-struct WarnAction;
-struct RaidAction;
-struct UnraidAction;
-struct AutomodAction;
-struct AutomodUserAction;
-struct AutomodInfoAction;
 struct Message;
 using MessagePtr = std::shared_ptr<const Message>;
 using MessagePtrMut = std::shared_ptr<Message>;
@@ -45,7 +36,6 @@ class IgnorePhrase;
 struct HelixVip;
 using HelixModerator = HelixVip;
 struct ChannelPointReward;
-struct DeleteAction;
 struct TwitchEmoteOccurrence;
 
 namespace linkparser {
@@ -115,13 +105,6 @@ public:
     MessageBuilder(TimeoutMessageTag, const QString &username,
                    const QString &durationInSeconds, bool multipleTimes,
                    const QDateTime &time);
-    MessageBuilder(const BanAction &action, const QDateTime &time,
-                   uint32_t count = 1);
-    MessageBuilder(const UnbanAction &action, const QDateTime &time);
-    MessageBuilder(const WarnAction &action);
-    MessageBuilder(const RaidAction &action);
-    MessageBuilder(const UnraidAction &action);
-    MessageBuilder(const AutomodUserAction &action);
 
     MessageBuilder(LiveUpdatesAddEmoteMessageTag, const QString &platform,
                    const QString &actor,
@@ -206,7 +189,6 @@ public:
                                                bool hostOn);
     static MessagePtr makeDeletionMessageFromIRC(
         const MessagePtr &originalMessage);
-    static MessagePtr makeDeletionMessageFromPubSub(const DeleteAction &action);
     static MessagePtr makeListOfUsersMessage(QString prefix, QStringList users,
                                              Channel *channel,
                                              MessageFlags extraFlags = {});
@@ -215,16 +197,6 @@ public:
         Channel *channel, MessageFlags extraFlags = {});
 
     static MessagePtr buildHypeChatMessage(Communi::IrcPrivateMessage *message);
-
-    static std::pair<MessagePtr, MessagePtr> makeAutomodMessage(
-        const AutomodAction &action, const QString &channelName);
-    static MessagePtr makeAutomodInfoMessage(const AutomodInfoAction &action);
-
-    static std::pair<MessagePtr, MessagePtr> makeLowTrustUserMessage(
-        const PubSubLowTrustUsersMessage &action, const QString &channelName,
-        const TwitchChannel *twitchChannel);
-    static MessagePtr makeLowTrustUpdateMessage(
-        const PubSubLowTrustUsersMessage &action);
 
     /// @brief Builds a message out of an `ircMessage`.
     ///
