@@ -39,7 +39,7 @@ struct ChannelPointReward;
 struct TwitchEmoteOccurrence;
 
 namespace linkparser {
-    struct Parsed;
+struct Parsed;
 }  // namespace linkparser
 
 struct SystemMessageTag {
