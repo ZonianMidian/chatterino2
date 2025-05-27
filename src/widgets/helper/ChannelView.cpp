@@ -35,12 +35,13 @@
 #include "util/IncognitoBrowser.hpp"
 #include "util/QMagicEnum.hpp"
 #include "util/Twitch.hpp"
+#include "widgets/buttons/LabelButton.hpp"
 #include "widgets/dialogs/ReplyThreadPopup.hpp"
 #include "widgets/dialogs/SettingsDialog.hpp"
 #include "widgets/dialogs/UserInfoPopup.hpp"
-#include "widgets/helper/EffectLabel.hpp"
 #include "widgets/helper/ScrollbarHighlight.hpp"
 #include "widgets/helper/SearchPopup.hpp"
+#include "widgets/Notebook.hpp"
 #include "widgets/Scrollbar.hpp"
 #include "widgets/splits/Split.hpp"
 #include "widgets/splits/SplitInput.hpp"
@@ -375,19 +376,17 @@ ChannelView::ChannelView(InternalCtor /*tag*/, QWidget *parent, Split *split,
 
 void ChannelView::initializeLayout()
 {
-    this->goToBottom_ = new EffectLabel(this, 0);
+    this->goToBottom_ = new LabelButton("More messages below", this);
     this->goToBottom_->setStyleSheet(
         "background-color: rgba(0,0,0,0.66); color: #FFF;");
-    this->goToBottom_->getLabel().setText("More messages below");
     this->goToBottom_->setVisible(false);
 
-    QObject::connect(
-        this->goToBottom_, &EffectLabel::leftClicked, this, [this] {
-            QTimer::singleShot(180, this, [this] {
-                this->scrollBar_->scrollToBottom(
-                    getSettings()->enableSmoothScrollingNewMessages.getValue());
-            });
+    QObject::connect(this->goToBottom_, &Button::leftClicked, this, [this] {
+        QTimer::singleShot(180, this, [this] {
+            this->scrollBar_->scrollToBottom(
+                getSettings()->enableSmoothScrollingNewMessages.getValue());
         });
+    });
 }
 
 void ChannelView::initializeScrollbar()
@@ -627,7 +626,7 @@ void ChannelView::scaleChangedEvent(float scale)
                  std::max<float>(
                      0.01, this->logicalDpiX() * this->devicePixelRatioF());
 #endif
-        this->goToBottom_->getLabel().setFont(
+        this->goToBottom_->setFont(
             getApp()->getFonts()->getFont(FontStyle::UiMedium, factor));
     }
 }
@@ -702,8 +701,8 @@ void ChannelView::layoutVisibleMessages(
 
     if (messages.size() > start)
     {
-        auto y = int(-(messages[start]->getHeight() *
-                       (fmod(this->scrollBar_->getRelativeCurrentValue(), 1))));
+        auto y = -(messages[start]->getHeight() *
+                   (fmod(this->scrollBar_->getRelativeCurrentValue(), 1)));
 
         for (auto i = start; i < messages.size() && y <= this->height(); i++)
         {
@@ -742,7 +741,7 @@ void ChannelView::updateScrollbar(
     }
 
     /// Layout the messages at the bottom
-    auto h = this->height() - 8;
+    qreal h = this->height() - 8;
     auto flags = this->getFlags();
     auto layoutWidth = this->getLayoutWidth();
     auto showScrollbar = false;
@@ -768,8 +767,8 @@ void ChannelView::updateScrollbar(
         if (h < 0)  // break condition
         {
             this->scrollBar_->setPageSize(
-                (messages.size() - i) +
-                qreal(h) / std::max<int>(1, message->getHeight()));
+                static_cast<qreal>(messages.size() - i) +
+                (h / std::max(1.0, message->getHeight())));
 
             showScrollbar = true;
             break;
@@ -1613,14 +1612,15 @@ void ChannelView::drawMessages(QPainter &painter, const QRect &area)
         .isMentions = this->underlyingChannel_ ==
                       getApp()->getTwitch()->getMentionsChannel(),
 
-        .y = int(-(messagesSnapshot[start]->getHeight() *
-                   (fmod(this->scrollBar_->getRelativeCurrentValue(), 1)))),
+        .y = -(messagesSnapshot[start]->getHeight() *
+               (fmod(this->scrollBar_->getRelativeCurrentValue(), 1))),
         .messageIndex = start,
         .isLastReadMessage = false,
 
     };
     bool showLastMessageIndicator = getSettings()->showLastMessageIndicator;
 
+    // using QRect here, because we can only request updates with a rect
     QRect animationArea;
     auto areaContainsY = [&area](auto y) {
         return y >= area.y() && y < area.y() + area.height();
@@ -1648,21 +1648,32 @@ void ChannelView::drawMessages(QPainter &painter, const QRect &area)
             {
                 if (animationArea.isNull())
                 {
-                    animationArea = QRect{0, ctx.y, layout->getWidth(),
-                                          layout->getHeight()};
+                    animationArea = QRect{
+                        0,
+                        static_cast<int>(ctx.y),
+                        static_cast<int>(layout->getWidth()),
+                        static_cast<int>(layout->getHeight()),
+                    };
                 }
                 else
                 {
-                    animationArea.setBottom(ctx.y + layout->getHeight());
+                    animationArea.setBottom(
+                        static_cast<int>(ctx.y + layout->getHeight()));
                     animationArea.setWidth(
-                        std::max(layout->getWidth(), animationArea.width()));
+                        std::max(static_cast<int>(layout->getWidth()),
+                                 animationArea.width()));
                 }
             }
 
             if (this->highlightedMessage_ == layout)
             {
                 painter.fillRect(
-                    0, ctx.y, layout->getWidth(), layout->getHeight(),
+                    QRectF{
+                        0,
+                        ctx.y,
+                        layout->getWidth(),
+                        layout->getHeight(),
+                    },
                     this->highlightAnimation_.currentValue().value<QColor>());
                 if (this->highlightAnimation_.state() ==
                     QVariantAnimation::Stopped)
@@ -1947,7 +1958,7 @@ void ChannelView::mouseMoveEvent(QMouseEvent *event)
     }
 
     std::shared_ptr<MessageLayout> layout;
-    QPoint relativePos;
+    QPointF relativePos;
     int messageIndex;
 
     // no message under cursor
@@ -1960,7 +1971,7 @@ void ChannelView::mouseMoveEvent(QMouseEvent *event)
 
     if (this->isScrolling_)
     {
-        this->currentMousePosition_ = event->screenPos();
+        this->currentMousePosition_ = event->globalPosition();
     }
 
     // check for word underneath cursor
@@ -2118,8 +2129,9 @@ void ChannelView::mouseMoveEvent(QMouseEvent *event)
             }
         }
 
-        this->tooltipWidget_->moveTo(event->globalPos() + QPoint(16, 16),
-                                     widgets::BoundsChecking::CursorPosition);
+        this->tooltipWidget_->moveTo(
+            event->globalPosition().toPoint() + QPoint(16, 16),
+            widgets::BoundsChecking::CursorPosition);
         this->tooltipWidget_->setWordWrap(isLinkValid);
         this->tooltipWidget_->show();
     }
@@ -2140,7 +2152,7 @@ void ChannelView::mousePressEvent(QMouseEvent *event)
     this->mouseDown.invoke(event);
 
     std::shared_ptr<MessageLayout> layout;
-    QPoint relativePos;
+    QPointF relativePos;
     int messageIndex;
 
     if (!tryGetMessageAt(event->pos(), layout, relativePos, messageIndex))
@@ -2174,7 +2186,7 @@ void ChannelView::mousePressEvent(QMouseEvent *event)
                 this->disableScrolling();
             }
 
-            this->lastLeftPressPosition_ = event->screenPos();
+            this->lastLeftPressPosition_ = event->globalPosition();
             this->isLeftMouseDown_ = true;
 
             if (layout->flags.has(MessageLayoutFlag::Collapsed))
@@ -2199,7 +2211,7 @@ void ChannelView::mousePressEvent(QMouseEvent *event)
                 this->disableScrolling();
             }
 
-            this->lastRightPressPosition_ = event->screenPos();
+            this->lastRightPressPosition_ = event->globalPosition();
             this->isRightMouseDown_ = true;
         }
         break;
@@ -2228,7 +2240,7 @@ void ChannelView::mousePressEvent(QMouseEvent *event)
                 }
                 else if (this->scrollBar_->isVisible())
                 {
-                    this->enableScrolling(event->screenPos());
+                    this->enableScrolling(event->globalPosition());
                 }
             }
         }
@@ -2246,7 +2258,7 @@ void ChannelView::mouseReleaseEvent(QMouseEvent *event)
     this->queueLayout();
 
     std::shared_ptr<MessageLayout> layout;
-    QPoint relativePos;
+    QPointF relativePos;
     int messageIndex;
 
     bool foundElement =
@@ -2260,7 +2272,7 @@ void ChannelView::mouseReleaseEvent(QMouseEvent *event)
             this->isDoubleClick_ = false;
             // Was actually not a wanted triple-click
             if (std::abs(distanceBetweenPoints(this->lastDoubleClickPosition_,
-                                               event->screenPos())) > 10.F)
+                                               event->globalPosition())) > 10.F)
             {
                 this->clickTimer_.stop();
                 return;
@@ -2271,7 +2283,7 @@ void ChannelView::mouseReleaseEvent(QMouseEvent *event)
             this->isLeftMouseDown_ = false;
 
             if (std::abs(distanceBetweenPoints(this->lastLeftPressPosition_,
-                                               event->screenPos())) > 15.F)
+                                               event->globalPosition())) > 15.F)
             {
                 return;
             }
@@ -2279,7 +2291,8 @@ void ChannelView::mouseReleaseEvent(QMouseEvent *event)
             // Triple-clicking a message selects the whole message
             if (foundElement && this->clickTimer_.isActive() &&
                 (std::abs(distanceBetweenPoints(this->lastDoubleClickPosition_,
-                                                event->screenPos())) < 10.F))
+                                                event->globalPosition())) <
+                 10.F))
             {
                 this->selectWholeMessage(layout.get(), messageIndex);
                 return;
@@ -2297,7 +2310,7 @@ void ChannelView::mouseReleaseEvent(QMouseEvent *event)
             this->isRightMouseDown_ = false;
 
             if (std::abs(distanceBetweenPoints(this->lastRightPressPosition_,
-                                               event->screenPos())) > 15.F)
+                                               event->globalPosition())) > 15.F)
             {
                 return;
             }
@@ -2311,9 +2324,9 @@ void ChannelView::mouseReleaseEvent(QMouseEvent *event)
     {
         if (this->isScrolling_ && this->scrollBar_->isVisible())
         {
-            if (event->screenPos() == this->lastMiddlePressPosition_)
+            if (event->globalPosition() == this->lastMiddlePressPosition_)
             {
-                this->enableScrolling(event->screenPos());
+                this->enableScrolling(event->globalPosition());
             }
             else
             {
@@ -2802,7 +2815,7 @@ void ChannelView::mouseDoubleClickEvent(QMouseEvent *event)
     }
 
     std::shared_ptr<MessageLayout> layout;
-    QPoint relativePos;
+    QPointF relativePos;
     int messageIndex;
 
     if (!tryGetMessageAt(event->pos(), layout, relativePos, messageIndex))
@@ -2811,7 +2824,7 @@ void ChannelView::mouseDoubleClickEvent(QMouseEvent *event)
     }
 
     this->isDoubleClick_ = true;
-    this->lastDoubleClickPosition_ = event->screenPos();
+    this->lastDoubleClickPosition_ = event->globalPosition();
     this->clickTimer_.start();
 
     // message under cursor is collapsed
@@ -3069,9 +3082,9 @@ void ChannelView::handleLinkClick(QMouseEvent *event, const Link &link,
     }
 }
 
-bool ChannelView::tryGetMessageAt(QPoint p,
+bool ChannelView::tryGetMessageAt(QPointF p,
                                   std::shared_ptr<MessageLayout> &_message,
-                                  QPoint &relativePos, int &index)
+                                  QPointF &relativePos, int &index)
 {
     auto &messagesSnapshot = this->getMessagesSnapshot();
 
@@ -3082,8 +3095,8 @@ bool ChannelView::tryGetMessageAt(QPoint p,
         return false;
     }
 
-    int y = -(messagesSnapshot[start]->getHeight() *
-              (fmod(this->scrollBar_->getRelativeCurrentValue(), 1)));
+    qreal y = -(messagesSnapshot[start]->getHeight() *
+                (fmod(this->scrollBar_->getRelativeCurrentValue(), 1)));
 
     for (size_t i = start; i < messagesSnapshot.size(); ++i)
     {
@@ -3091,7 +3104,7 @@ bool ChannelView::tryGetMessageAt(QPoint p,
 
         if (p.y() < y + message->getHeight())
         {
-            relativePos = QPoint(p.x(), p.y() - y);
+            relativePos = QPointF(p.x(), p.y() - y);
             _message = message;
             index = i;
             return true;

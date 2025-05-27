@@ -16,7 +16,6 @@
 #include "providers/IvrApi.hpp"
 #include "providers/pronouns/Pronouns.hpp"
 #include "providers/twitch/api/Helix.hpp"
-#include "providers/twitch/ChannelPointReward.hpp"
 #include "providers/twitch/TwitchAccount.hpp"
 #include "providers/twitch/TwitchChannel.hpp"
 #include "providers/twitch/TwitchIrcServer.hpp"
@@ -29,12 +28,14 @@
 #include "util/Helpers.hpp"
 #include "util/LayoutCreator.hpp"
 #include "util/PostToThread.hpp"
+#include "widgets/buttons/LabelButton.hpp"
+#include "widgets/buttons/PixmapButton.hpp"
 #include "widgets/dialogs/EditUserNotesDialog.hpp"
 #include "widgets/helper/ChannelView.hpp"
-#include "widgets/helper/EffectLabel.hpp"
 #include "widgets/helper/InvisibleSizeGrip.hpp"
 #include "widgets/helper/Line.hpp"
 #include "widgets/Label.hpp"
+#include "widgets/Notebook.hpp"
 #include "widgets/Scrollbar.hpp"
 #include "widgets/splits/Split.hpp"
 #include "widgets/Window.hpp"
@@ -51,7 +52,6 @@
 #include <QStringBuilder>
 
 namespace {
-
 constexpr QStringView TEXT_FOLLOWERS = u"Followers: %1";
 constexpr QStringView TEXT_CREATED = u"Created: %1";
 constexpr QStringView TEXT_TITLE = u"%1's Usercard - #%2";
@@ -65,17 +65,17 @@ constexpr qsizetype NOTES_PREVIEW_LENGTH = 80;
 using namespace chatterino;
 
 Label *addCopyableLabel(LayoutCreator<QHBoxLayout> box, const char *tooltip,
-                        Button **copyButton = nullptr)
+                        PixmapButton **copyButton = nullptr)
 {
     auto label = box.emplace<Label>();
-    auto button = box.emplace<Button>();
+    auto button = box.emplace<PixmapButton>();
     if (copyButton != nullptr)
     {
         button.assign(copyButton);
     }
     button->setPixmap(getApp()->getThemes()->buttons.copy);
-    button->setScaleIndependantSize(18, 18);
-    button->setDim(Button::Dim::Lots);
+    button->setScaleIndependentSize(18, 18);
+    button->setDim(DimButton::Dim::Lots);
     button->setToolTip(tooltip);
     QObject::connect(
         button.getElement(), &Button::leftClicked,
@@ -287,11 +287,10 @@ UserInfoPopup::UserInfoPopup(bool closeAutomatically, Split *split)
     {
         auto avatarBox = head.emplace<QVBoxLayout>().withoutMargin();
         // avatar
-        auto avatar =
-            avatarBox.emplace<Button>(nullptr).assign(&this->ui_.avatarButton);
-
-        avatar->setScaleIndependantSize(100, 100);
-        avatar->setDim(Button::Dim::None);
+        auto avatar = avatarBox.emplace<PixmapButton>(nullptr).assign(
+            &this->ui_.avatarButton);
+        avatar->setScaleIndependentSize(100, 100);
+        avatar->setDim(DimButton::Dim::None);
         QObject::connect(
             avatar.getElement(), &Button::clicked,
             [this](Qt::MouseButton button) {
@@ -380,11 +379,12 @@ UserInfoPopup::UserInfoPopup(bool closeAutomatically, Split *split)
                     default:;
                 }
             });
-        auto switchAv = avatarBox.emplace<EffectLabel2>(nullptr, 2)
-                            .assign(&this->ui_.switchAvatars);
+        auto switchAv =
+            avatarBox.emplace<LabelButton>(QString{}, nullptr, QSize{2, 2})
+                .assign(&this->ui_.switchAvatars);
         switchAv->hide();
         QObject::connect(
-            switchAv.getElement(), &EffectLabel2::leftClicked, [this] {
+            switchAv.getElement(), &LabelButton::leftClicked, [this] {
                 if (!this->seventvAvatar_)
                 {
                     this->ui_.switchAvatars->hide();
@@ -395,14 +395,14 @@ UserInfoPopup::UserInfoPopup(bool closeAutomatically, Split *split)
                 {
                     this->seventvAvatar_->stop();
                     this->ui_.avatarButton->setPixmap(this->avatarPixmap_);
-                    this->ui_.switchAvatars->getLabel().setText("Show 7TV");
+                    this->ui_.switchAvatars->setText("Show 7TV");
                 }
                 else
                 {
                     this->ui_.avatarButton->setPixmap(
                         this->seventvAvatar_->currentPixmap());
                     this->seventvAvatar_->start();
-                    this->ui_.switchAvatars->getLabel().setText("Show Twitch");
+                    this->ui_.switchAvatars->setText("Show Twitch");
                 }
                 this->updateAvatarUrl();
             });
@@ -471,28 +471,28 @@ UserInfoPopup::UserInfoPopup(bool closeAutomatically, Split *split)
             .assign(&this->ui_.ignoreHighlights);
         // visibility of this is updated in setData
 
-        auto notesAdd =
-            user.emplace<EffectLabel2>(this).assign(&this->ui_.notesAdd);
-        notesAdd->getLabel().setText("Add notes");
-        auto usercard =
-            user.emplace<EffectLabel2>(this).assign(&this->ui_.usercardLabel);
-        usercard->getLabel().setText("Usercard");
-        auto stvUser = user.emplace<EffectLabel2>(this);
-        stvUser.assign(&this->ui_.stvUser);
-        stvUser->getLabel().setText("7tv User Page");
+        user.emplace<LabelButton>("Add notes", this)
+            .assign(&this->ui_.notesAdd);
+        auto usercard = user.emplace<LabelButton>("Usercard", this)
+                            .assign(&this->ui_.usercardLabel);
+
+        auto stvUser = user.emplace<LabelButton>("7tv User Page", this)
+                           .assign(&this->ui_.stvUser);
+
         stvUser->setVisible(false);
-        auto mod = user.emplace<Button>(this);
+
+        auto mod = user.emplace<PixmapButton>(this);
         mod->setPixmap(getResources().buttons.mod);
-        mod->setScaleIndependantSize(30, 30);
-        auto unmod = user.emplace<Button>(this);
+        mod->setScaleIndependentSize(30, 30);
+        auto unmod = user.emplace<PixmapButton>(this);
         unmod->setPixmap(getResources().buttons.unmod);
-        unmod->setScaleIndependantSize(30, 30);
-        auto vip = user.emplace<Button>(this);
+        unmod->setScaleIndependentSize(30, 30);
+        auto vip = user.emplace<PixmapButton>(this);
         vip->setPixmap(getResources().buttons.vip);
-        vip->setScaleIndependantSize(30, 30);
-        auto unvip = user.emplace<Button>(this);
+        vip->setScaleIndependentSize(30, 30);
+        auto unvip = user.emplace<PixmapButton>(this);
         unvip->setPixmap(getResources().buttons.unvip);
-        unvip->setScaleIndependantSize(30, 30);
+        unvip->setScaleIndependentSize(30, 30);
 
         user->addStretch(1);
 
@@ -731,7 +731,7 @@ void UserInfoPopup::installEvents()
                 this->ui_.block->setEnabled(false);
 
                 getApp()->getAccounts()->twitch.getCurrent()->unblockUser(
-                    this->userId_, this,
+                    this->userId_, this->userName_, this,
                     [this, reenableBlockCheckbox, currentUser] {
                         this->channel_->addSystemMessage(
                             QString("You successfully unblocked user %1")
@@ -772,7 +772,7 @@ void UserInfoPopup::installEvents()
                 }
 
                 getApp()->getAccounts()->twitch.getCurrent()->blockUser(
-                    this->userId_, this,
+                    this->userId_, this->userName_, this,
                     [this, reenableBlockCheckbox, currentUser] {
                         this->channel_->addSystemMessage(
                             QString("You successfully blocked user %1")
@@ -833,7 +833,7 @@ void UserInfoPopup::installEvents()
 
     // user notes
     QObject::connect(
-        this->ui_.notesAdd, &EffectLabel2::clicked, [this]() mutable {
+        this->ui_.notesAdd, &LabelButton::clicked, [this]() mutable {
             if (this->editUserNotesDialog_.isNull())
             {
                 this->editUserNotesDialog_ = new EditUserNotesDialog(this);
@@ -1386,7 +1386,7 @@ void UserInfoPopup::setSevenTVAvatar(const QString &filename,
     movie->start();
     this->seventvAvatar_ = movie;
     this->ui_.switchAvatars->show();
-    this->ui_.switchAvatars->getLabel().setText("Show Twitch");
+    this->ui_.switchAvatars->setText("Show Twitch");
     this->isTwitchAvatarShown_ = false;
     this->updateAvatarUrl();
 }
@@ -1466,9 +1466,9 @@ UserInfoPopup::TimeoutWidget::TimeoutWidget()
 
     const auto addButton = [&](Action action, const QString &title,
                                const QPixmap &pixmap) {
-        auto button = addLayout(title).emplace<Button>(nullptr);
+        auto button = addLayout(title).emplace<PixmapButton>(nullptr);
         button->setPixmap(pixmap);
-        button->setScaleIndependantSize(buttonHeight, buttonHeight);
+        button->setScaleIndependentSize(buttonHeight, buttonHeight);
         button->setBorderColor(QColor(255, 255, 255, 127));
 
         QObject::connect(
@@ -1482,16 +1482,17 @@ UserInfoPopup::TimeoutWidget::TimeoutWidget()
 
         for (const auto &item : getSettings()->timeoutButtons.getValue())
         {
-            auto a = hbox.emplace<EffectLabel2>();
-            a->getLabel().setText(QString::number(item.second) + item.first);
+            auto a = hbox.emplace<LabelButton>();
+            a->setPadding({0, 0});
+            a->setText(QString::number(item.second) + item.first);
 
-            a->setScaleIndependantSize(buttonWidth, buttonHeight);
+            a->setScaleIndependentSize(buttonWidth, buttonHeight);
             a->setBorderColor(borderColor);
 
             const auto pair =
                 std::make_pair(Action::Timeout, calculateTimeoutDuration(item));
 
-            QObject::connect(a.getElement(), &EffectLabel2::leftClicked,
+            QObject::connect(a.getElement(), &LabelButton::leftClicked,
                              [this, pair] {
                                  this->buttonClicked.invoke(pair);
                              });
